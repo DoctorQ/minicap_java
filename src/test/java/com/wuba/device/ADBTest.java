@@ -30,6 +30,12 @@ public class ADBTest {
 	@Test
 	public void adbTest() {
 		LOG.info("连接成功");
+		float width = 300;
+		float width1 = 1440;
+		float height = 2560;
+		float c = width / width1;
+		int height1 = (int) (Math.round(c * height));
+		System.out.println("c = " + c + ",height1 = " + height1);
 	}
 
 }
