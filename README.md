@@ -1,5 +1,5 @@
 # minicap_java
-GUI展现Android手机屏幕，后台使用[minicap来](https://github.com/openstf/minicap)截图
+GUI展现Android手机屏幕，后台使用[minicap](https://github.com/openstf/minicap)截图
 
 # 使用说明
 
