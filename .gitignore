@@ -1,0 +1,7 @@
+.alog
+.alog.*
+.classpath
+.project
+.settings/
+test-output/
+bin/
