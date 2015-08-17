@@ -5,3 +5,4 @@
 .settings/
 test-output/
 bin/
+.gradle/
