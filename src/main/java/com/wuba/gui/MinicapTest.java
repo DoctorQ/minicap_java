@@ -66,8 +66,12 @@ public class MinicapTest extends JFrame {
 
 		public void paint(Graphics g) {
 			try {
+				if (image == null)
+					return;
 				MinicapTest.this.setSize(width, height);
 				g.drawImage(image, 0, 0, width, height, null);
+				image.flush();
+				image = null;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -75,11 +79,7 @@ public class MinicapTest extends JFrame {
 		}
 
 		public void frameImageChange(BufferedImage image) {
-			// TODO Auto-generated method stub
 			this.image = image;
-			//
-			// int radio = image.getWidth() / width;
-			// height = image.getHeight() / radio;
 			float radio = (float) (width) / (float) (image.getWidth());
 			height = (int) (Math.round(radio * image.getHeight()));
 			this.repaint();

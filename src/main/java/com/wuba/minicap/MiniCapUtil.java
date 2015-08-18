@@ -73,9 +73,8 @@ public class MiniCapUtil implements ScreenSubject {
 		String sdk = device.getProperty(SDK_COMMAND);
 		File minicapBinFile = new File(Constant.getMinicapBin(), abi
 				+ File.separator + MINICAP_BIN);
-		File minicapSoFile = new File(Constant.getMinicapSo(),
-				"android-" + sdk + File.separator + abi + File.separator
-						+ MINICAP_SO);
+		File minicapSoFile = new File(Constant.getMinicapSo(), "android-" + sdk
+				+ File.separator + abi + File.separator + MINICAP_SO);
 		try {
 			// 将minicap的可执行文件和.so文件一起push到设备中
 			device.pushFile(minicapBinFile.getAbsolutePath(), REMOTE_PATH
@@ -112,58 +111,36 @@ public class MiniCapUtil implements ScreenSubject {
 				size);
 		Process process = null;
 		byte[] frameBody = new byte[0];
-		int byte_255 = 0;
-		int byte_216 = 0;
 		try {
 			process = Runtime.getRuntime().exec(takeScreenShotCommand);
 			InputStream input = process.getInputStream();
-			// BufferedReader br = new BufferedReader(new
-			// InputStreamReader(input));
-			// String line = null;
-			// boolean message = false;
-			// StringBuffer buffer = new StringBuffer();
-			// while ((line = br.readLine()) != null) {
-			// // LOG.info("接受到信息: " + line);
-			// if (line.contains("JPG encoder")) {
-			// message = true;
-			// continue;
-			// }
-			// if (message) {
-			// buffer.append(line);
-			// }
-			// }
-			// byte[] b = buffer.toString().getBytes();
-			// createImageFromByte(b);
-			//
 			isRunning = true;
 			boolean merge = false;
-
-			int len = 4096;
+			int len = 1024;
 			while (isRunning) {
-				// len = input.available();
-				// if (len == 0) {
-				// continue;
-				// }
 				byte[] buffer = new byte[len];
-				int flag = input.read(buffer);
-				buffer = subByteArray(buffer, 0, flag);
+				int realLen = input.read(buffer);
 
-				if (flag == -1) {
+				if (realLen == -1) {
 					isRunning = false;
-					continue;
+					break;
+				}
+				if (buffer.length != realLen) {
+					// LOG.info("接受到的数据大小为 : " + buffer.length + ",reallen = "
+					// + realLen);
+					buffer = subByteArray(buffer, 0, realLen);
+
 				}
 				if (new String(buffer).contains("JPG encoder")) {
 					merge = true;
 					continue;
 				}
 				if (merge) {
-					LOG.info("flag = " + flag + ",buffer = "
-							+ bytesToHexString(buffer).substring(0, 7));
 					frameBody = byteMerger(frameBody, buffer);
 				}
 			}
+			LOG.info(bytesToHexString(frameBody).substring(0, 40));
 			// createImageFromByte(frameBody);
-
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -229,6 +206,15 @@ public class MiniCapUtil implements ScreenSubject {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}
 		return bufferedImage;
 	}
@@ -289,8 +275,7 @@ public class MiniCapUtil implements ScreenSubject {
 						buffer = subByteArray(buffer, 0, realLen);
 					}
 					dataQueue.add(buffer);
-					// LOG.debug("接受到的数据大小为 : " + buffer.length + ",reallen = "
-					// + realLen);
+
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -363,13 +348,9 @@ public class MiniCapUtil implements ScreenSubject {
 							final byte[] finalBytes = subByteArray(frameBody,
 									0, frameBody.length);
 							// 转化成bufferImage
+							BufferedImage image = createImageFromByte(finalBytes);
+							notifyObservers(image);
 
-							// new Thread(new Runnable() {
-							// @Override
-							// public void run() {
-							notifyObservers(createImageFromByte(finalBytes));
-							// }
-							// }).start();
 							long current = System.currentTimeMillis();
 							LOG.info("图片已生成,耗时: "
 									+ TimeUtil.formatElapsedTime(current
