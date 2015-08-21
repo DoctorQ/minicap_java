@@ -3,12 +3,17 @@
  */
 package com.wuba.device;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.RawImage;
+import com.android.ddmlib.TimeoutException;
 
 /**
  * @author hui.qian qianhui@58.com
@@ -28,14 +33,13 @@ public class ADBTest {
 	}
 
 	@Test
-	public void adbTest() {
-		LOG.info("连接成功");
-		float width = 300;
-		float width1 = 1440;
-		float height = 2560;
-		float c = width / width1;
-		int height1 = (int) (Math.round(c * height));
-		System.out.println("c = " + c + ",height1 = " + height1);
+	public void adbTest() throws TimeoutException, AdbCommandRejectedException,
+			IOException {
+		
+		while (true) {
+			RawImage image = device.getScreenshot();
+			LOG.info("连接成功");
+		}
 	}
 
 }

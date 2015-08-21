@@ -3,7 +3,7 @@
  */
 package com.wuba.minicap;
 
-import java.awt.image.BufferedImage;
+import java.awt.Image;
 
 
 /**
@@ -15,6 +15,6 @@ public interface ScreenSubject {
 
 	public void removeObserver(AndroidScreenObserver o);
 
-	public void notifyObservers(BufferedImage image);
+	public void notifyObservers(Image image);
 
 }

@@ -7,14 +7,21 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 
 import org.apache.log4j.Logger;
 
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.RawImage;
+import com.android.ddmlib.TimeoutException;
 import com.wuba.device.ADB;
 import com.wuba.minicap.AndroidScreenObserver;
 import com.wuba.minicap.MiniCapUtil;
@@ -31,6 +38,7 @@ public class MinicapTest extends JFrame {
 	private IDevice device;
 	private int width = 300;
 	private int height = 500;
+	private Thread thread;
 
 	public MinicapTest() {
 		ADB adb = new ADB();
@@ -44,8 +52,18 @@ public class MinicapTest extends JFrame {
 		this.setSize(300, height);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation((dim.width - this.getWidth()) / 2, 0);
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				
+			}
+		});
 		this.setVisible(true);
+
+		pack();
+
 	}
 
 	public static void main(String[] args) {
@@ -54,11 +72,12 @@ public class MinicapTest extends JFrame {
 
 	class MyPanel extends JPanel implements AndroidScreenObserver {
 
-		Image image = null;
+		BufferedImage image = null;
 		MiniCapUtil minicap = null;
 
 		public MyPanel(IDevice device) {
 			minicap = new MiniCapUtil(device);
+
 			minicap.registerObserver(this);
 			minicap.startScreenListener();
 
@@ -78,11 +97,15 @@ public class MinicapTest extends JFrame {
 			}
 		}
 
-		public void frameImageChange(BufferedImage image) {
-			this.image = image;
-			float radio = (float) (width) / (float) (image.getWidth());
-			height = (int) (Math.round(radio * image.getHeight()));
+		@Override
+		public void frameImageChange(Image image) {
+			this.image = (BufferedImage) image;
+			int w = this.image.getWidth();
+			int h = this.image.getHeight();
+			float radio = (float) width / (float) w;
+			height = (int) (radio * h);
 			this.repaint();
 		}
 	}
+
 }

@@ -3,6 +3,8 @@
  */
 package com.wuba.minicap;
 
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -11,6 +13,7 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observer;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -116,7 +119,7 @@ public class MiniCapUtil implements ScreenSubject {
 			InputStream input = process.getInputStream();
 			isRunning = true;
 			boolean merge = false;
-			int len = 1024;
+			int len = 2048;
 			while (isRunning) {
 				byte[] buffer = new byte[len];
 				int realLen = input.read(buffer);
@@ -129,7 +132,6 @@ public class MiniCapUtil implements ScreenSubject {
 					// LOG.info("接受到的数据大小为 : " + buffer.length + ",reallen = "
 					// + realLen);
 					buffer = subByteArray(buffer, 0, realLen);
-
 				}
 				if (new String(buffer).contains("JPG encoder")) {
 					merge = true;
@@ -140,7 +142,12 @@ public class MiniCapUtil implements ScreenSubject {
 				}
 			}
 			LOG.info(bytesToHexString(frameBody).substring(0, 40));
-			// createImageFromByte(frameBody);
+			if ((frameBody[0] != -1) || frameBody[1] != -40) {
+				LOG.error(String
+						.format("Frame body does not start with JPG header"));
+				return;
+			}
+			createImageFromByte(frameBody);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -155,11 +162,11 @@ public class MiniCapUtil implements ScreenSubject {
 		}
 		for (int i = 0; i < src.length; i++) {
 			int v = src[i] & 0xFF;
-			// String hv = Integer.toHexString(v);
-			// if (hv.length() < 2) {
-			// stringBuilder.append(0);
-			// }
-			stringBuilder.append(v + " ");
+			String hv = Integer.toHexString(v);
+			if (hv.length() < 2) {
+				stringBuilder.append(0);
+			}
+			stringBuilder.append(hv + " ");
 		}
 		return stringBuilder.toString();
 	}
@@ -217,6 +224,12 @@ public class MiniCapUtil implements ScreenSubject {
 			}
 		}
 		return bufferedImage;
+	}
+
+	private Image createImage(byte[] data) {
+		Image image = Toolkit.getDefaultToolkit().createImage(data);
+		LOG.info("创建成功");
+		return image;
 	}
 
 	// java合并两个byte数组
@@ -348,8 +361,15 @@ public class MiniCapUtil implements ScreenSubject {
 							final byte[] finalBytes = subByteArray(frameBody,
 									0, frameBody.length);
 							// 转化成bufferImage
-							BufferedImage image = createImageFromByte(finalBytes);
-							notifyObservers(image);
+							new Thread(new Runnable() {
+
+								@Override
+								public void run() {
+									// TODO Auto-generated method stub
+									Image image = createImageFromByte(finalBytes);
+									notifyObservers(image);
+								}
+							}).start();
 
 							long current = System.currentTimeMillis();
 							LOG.info("图片已生成,耗时: "
@@ -487,15 +507,14 @@ public class MiniCapUtil implements ScreenSubject {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * com.wuba.utils.screenshot.ScreenSubject#notifyObservers(java.awt.image
-	 * .BufferedImage)
+	 * @see com.wuba.minicap.ScreenSubject#notifyObservers(java.awt.Image)
 	 */
-	public void notifyObservers(BufferedImage image) {
-		// TODO Auto-generated method stub
+	@Override
+	public void notifyObservers(Image image) {
 		for (AndroidScreenObserver observer : observers) {
 			observer.frameImageChange(image);
 		}
+		// TODO Auto-generated method stub
 
 	}
 }
