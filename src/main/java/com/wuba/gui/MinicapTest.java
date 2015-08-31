@@ -79,7 +79,8 @@ public class MinicapTest extends JFrame {
 			minicap = new MiniCapUtil(device);
 
 			minicap.registerObserver(this);
-			minicap.startScreenListener();
+			minicap.takeScreenShotOnce();
+			//minicap.startScreenListener();
 
 		}
 

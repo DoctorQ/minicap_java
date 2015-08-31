@@ -6,10 +6,12 @@ package com.wuba.minicap;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +60,8 @@ public class MiniCapUtil implements ScreenSubject {
 	private String MINICAP_CHMOD_COMMAND = "chmod 777 %s/%s";
 	private String MINICAP_WM_SIZE_COMMAND = "wm size";
 	private String MINICAP_START_COMMAND = "LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P %s@%s/0";
-	private String MINICAP_TAKESCREENSHOT_COMMAND = "adb -s %s shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P %s@%s/0 -s";
+	private String MINICAP_TAKESCREENSHOT_COMMAND = "LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P %s@%s/0 -s >%s";
+	private String ADB_PULL_COMMAND = "adb -s %s pull %s %s";
 	private boolean isRunning = false;
 	private String size;
 
@@ -66,7 +69,16 @@ public class MiniCapUtil implements ScreenSubject {
 		this.device = device;
 		init();
 	}
-
+	//判断是否支持minicap
+	public boolean isSupoort(){
+		String supportCommand = String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P %s@%s/0 -t", size,size);
+		String output = executeShellCommand(supportCommand);
+		if(output.trim().endsWith("OK")){
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * 将minicap的二进制和.so文件push到/data/local/tmp文件夹下，启动minicap服务
 	 */
@@ -109,46 +121,37 @@ public class MiniCapUtil implements ScreenSubject {
 	}
 
 	public void takeScreenShotOnce() {
-		final String takeScreenShotCommand = String.format(
-				MINICAP_TAKESCREENSHOT_COMMAND, device.getSerialNumber(), size,
-				size);
-		Process process = null;
-		byte[] frameBody = new byte[0];
+		String savePath = "/data/local/tmp/screenshot.jpg";
+		String takeScreenShotCommand = String.format(
+				MINICAP_TAKESCREENSHOT_COMMAND, size,
+				size, savePath);
+		String localPath = System.getProperty("user.dir") + "/screenshot.jpg";
+		String pullCommand = String.format(ADB_PULL_COMMAND,
+				device.getSerialNumber(), savePath, localPath);
 		try {
-			process = Runtime.getRuntime().exec(takeScreenShotCommand);
-			InputStream input = process.getInputStream();
-			isRunning = true;
-			boolean merge = false;
-			int len = 2048;
-			while (isRunning) {
-				byte[] buffer = new byte[len];
-				int realLen = input.read(buffer);
-
-				if (realLen == -1) {
-					isRunning = false;
-					break;
-				}
-				if (buffer.length != realLen) {
-					// LOG.info("接受到的数据大小为 : " + buffer.length + ",reallen = "
-					// + realLen);
-					buffer = subByteArray(buffer, 0, realLen);
-				}
-				if (new String(buffer).contains("JPG encoder")) {
-					merge = true;
-					continue;
-				}
-				if (merge) {
-					frameBody = byteMerger(frameBody, buffer);
-				}
-			}
-			LOG.info(bytesToHexString(frameBody).substring(0, 40));
-			if ((frameBody[0] != -1) || frameBody[1] != -40) {
-				LOG.error(String
-						.format("Frame body does not start with JPG header"));
-				return;
-			}
-			createImageFromByte(frameBody);
+			// Process process =
+			// Runtime.getRuntime().exec(takeScreenShotCommand);
+			executeShellCommand(takeScreenShotCommand);
+			device.pullFile(savePath, localPath);
+			// BufferedReader br = new BufferedReader(new InputStreamReader(
+			// process.getInputStream()));
+			// String line = null;
+			// while ((line = br.readLine()) != null) {
+			// LOG.debug(line);
+			// }
+			// Thread.sleep(200);
+			// process.waitFor();
+			Runtime.getRuntime().exec(pullCommand);
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SyncException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (AdbCommandRejectedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

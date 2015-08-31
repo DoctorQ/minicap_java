@@ -20,6 +20,7 @@ dependencies {
     compile 'org.testng:testng:6.8.13'
 	compile 'log4j:log4j:1.2.17'
 	compile 'com.android.tools.ddms:ddmlib:24.2.3'
+	
 
 }
 
