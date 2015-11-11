@@ -38,7 +38,7 @@ public class MinicapTest extends JFrame {
 	private IDevice device;
 	private int width = 300;
 	private int height = 500;
-	private Thread thread;
+	private Thread thread = null;
 
 	public MinicapTest() {
 		ADB adb = new ADB();
@@ -52,16 +52,14 @@ public class MinicapTest extends JFrame {
 		this.setSize(300, height);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation((dim.width - this.getWidth()) / 2, 0);
-
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				
+
 			}
 		});
 		this.setVisible(true);
-
 		pack();
 
 	}
@@ -77,10 +75,9 @@ public class MinicapTest extends JFrame {
 
 		public MyPanel(IDevice device) {
 			minicap = new MiniCapUtil(device);
-
 			minicap.registerObserver(this);
 			minicap.takeScreenShotOnce();
-			//minicap.startScreenListener();
+			minicap.startScreenListener();
 
 		}
 
@@ -91,7 +88,6 @@ public class MinicapTest extends JFrame {
 				MinicapTest.this.setSize(width, height);
 				g.drawImage(image, 0, 0, width, height, null);
 				image.flush();
-				image = null;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -105,6 +101,7 @@ public class MinicapTest extends JFrame {
 			int h = this.image.getHeight();
 			float radio = (float) width / (float) w;
 			height = (int) (radio * h);
+			System.out.println("width : " + w + ",height : " + h);
 			this.repaint();
 		}
 	}
