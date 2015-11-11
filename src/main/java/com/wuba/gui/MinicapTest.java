@@ -47,7 +47,7 @@ public class MinicapTest extends JFrame {
 			return;
 		}
 		device = adb.getDevices()[0];
-		mp = new MyPanel(device);
+		mp = new MyPanel(device,this);
 		this.getContentPane().add(mp);
 		this.setSize(300, height);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -73,7 +73,7 @@ public class MinicapTest extends JFrame {
 		BufferedImage image = null;
 		MiniCapUtil minicap = null;
 
-		public MyPanel(IDevice device) {
+		public MyPanel(IDevice device,MinicapTest frame) {
 			minicap = new MiniCapUtil(device);
 			minicap.registerObserver(this);
 			minicap.takeScreenShotOnce();
@@ -87,6 +87,7 @@ public class MinicapTest extends JFrame {
 					return;
 				MinicapTest.this.setSize(width, height);
 				g.drawImage(image, 0, 0, width, height, null);
+				this.setSize(300, height + 300);
 				image.flush();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
